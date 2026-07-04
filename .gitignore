@@ -1,0 +1,47 @@
+# Entorno y secretos
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Airflow / ejecución local
+logs/
+*.log
+airflow-webserver.pid
+airflow-scheduler.pid
+unittests.cfg
+standalone_admin_password.txt
+
+# Archivos temporales y del sistema
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Artefactos y binarios grandes del proyecto
+spark-*.tgz
+spark-*-bin-hadoop*/
