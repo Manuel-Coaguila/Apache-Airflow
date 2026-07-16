@@ -4,11 +4,12 @@ USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    openjdk-17-jdk \
+    openjdk-17-jre-headless \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY spark-4.0.3-bin-hadoop3 /opt/spark
+RUN rm -rf /opt/spark/R /opt/spark/data /opt/spark/examples /opt/spark/licenses
 COPY extra_jars/*.jar /opt/spark/jars/
 
 ENV SPARK_HOME=/opt/spark
