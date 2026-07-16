@@ -46,17 +46,8 @@
 ---
 x-airflow-common:
   &airflow-common
-  # In order to add custom dependencies or upgrade provider distributions you can use your extended image.
-  # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
-  # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  
-  #image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.2.2}
-  
   build:
     context: .
-    args:
-      UID: ${AIRFLOW_UID:-1000}
-      GID: ${AIRFLOW_GID:-0}
   image: airflow-custom:001
   env_file:
     - ${ENV_FILE_PATH:-.env}
@@ -73,39 +64,21 @@ x-airflow-common:
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secret}
     AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
-    # yamllint disable rule:line-length
-    # Use simple http server on scheduler for health checks
-    # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
-    # yamllint enable rule:line-length
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
-    # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
-    # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
-    # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
-    
-    - ./conexiones:/opt/airflow/conexiones
-
-    - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/spark-projects:/opt/spark/spark-projects
-    - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/extra-jars:/opt/spark/extra-jars
+    - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/projects:/opt/spark/projects
     - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/conf:/opt/spark/conf
     - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/logs:/opt/spark/logs
     - ${HOME}/Escritorio/Proyecto_Tesis/nas:/opt/airflow/nas
-    #- ~/Escritorio/Proyecto_Tesis/apache_spark/output:/opt/spark/output
-
-    #- ./shared:/opt/airflow/shared
-    #- ~/Escritorio/Proyecto_Tesis/sql/scripts_sql:/opt/airflow/scripts_sql
-    #- /var/run/docker.sock:/var/run/docker.sock
   networks:
     - tesis-net
   user: "${AIRFLOW_UID:-1000}:${AIRFLOW_GID:-0}"
-  # group_add:
-  #   - ${DOCKER_GID:-973}
   depends_on:
     &airflow-common-depends-on
     redis:
@@ -130,6 +103,11 @@ services:
     restart: always
     networks:
       - tesis-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
   redis:
     # Redis is limited to 7.2-bookworm due to licencing change
@@ -141,11 +119,16 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 30s
-      retries: 50
+      retries: 10
       start_period: 30s
     restart: always
     networks:
       - tesis-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   airflow-apiserver:
     <<: *airflow-common
@@ -163,6 +146,11 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
   airflow-scheduler:
     <<: *airflow-common
@@ -178,6 +166,11 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
   airflow-dag-processor:
     <<: *airflow-common
@@ -193,21 +186,23 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   airflow-worker:
     <<: *airflow-common
     command: celery worker
     healthcheck:
-      # yamllint disable rule:line-length
-      test: ["CMD-SHELL", 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"']
+      test: ["CMD-SHELL", 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"']
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     environment:
       <<: *airflow-common-env
-      # Required to handle warm shutdown of the celery workers properly
-      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
       DUMB_INIT_SETSID: "0"
     restart: always
     depends_on:
@@ -216,6 +211,11 @@ services:
         condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
 
   airflow-triggerer:
     <<: *airflow-common
@@ -231,6 +231,11 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   airflow-init:
     <<: *airflow-common
@@ -313,17 +318,6 @@ services:
         echo "Files in shared volumes:"
         echo
         ls -la /opt/airflow/{logs,dags,plugins,config}
-        # echo "Migrando base de datos de Airflow..."
-        # airflow db migrate
-    #     echo "Importando conexiones desde JSON..."
-    #     bash /opt/airflow/conexiones/con.sh
-    # volumes:
-    #   - ./conexiones:/opt/airflow/conexiones
-    # depends_on:
-    #   postgres:
-    #     condition: service_healthy
-
-    # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
@@ -332,6 +326,11 @@ services:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "${AIRFLOW_UID:-1000}:${AIRFLOW_GID:-0}"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   airflow-cli:
     <<: *airflow-common
@@ -340,8 +339,6 @@ services:
     environment:
       <<: *airflow-common-env
       CONNECTION_CHECK_MAX_COUNT: "0"
-    # Workaround for entrypoint issue. See: https://github.com/apache/airflow/issues/16252
-    #command: bash -c "bash /opt/airflow/conexiones/con.sh"
     command:
       - bash
       - -c
@@ -350,10 +347,12 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
-  # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
-  # or by explicitly targeted on the command line e.g. docker-compose up flower.
-  # See: https://docs.docker.com/compose/profiles/
   flower:
     <<: *airflow-common
     command: celery flower
@@ -372,27 +371,11 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
-  # test-python:
-  #   build: 
-  #     context: ./DockerFile/python
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - .:/opt/project
-  #     - ./shared:/opt/project/shared
-  #     - /home/mcoaguila/Escritorio/sql/scripts_sql:/opt/project/scripts_sql 
-  #   working_dir: /opt/project
-  #   command: tail -f /dev/null
-  #   environment:
-  #     AIRFLOW_API_URL: "http://airflow-apiserver:8080"
-  #     POSTGRES_HOST: "postgres"
-  #     REDIS_HOST: "redis"
-  #   networks:
-  #     - tesis-net
-  #   depends_on:
-  #     - airflow-apiserver
-  #     - postgres
-  #     - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
 volumes:
   postgres-db-volume:

@@ -11,6 +11,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
 .pytest_cache/
 .mypy_cache/
 .pyre/
@@ -42,9 +46,11 @@ standalone_admin_password.txt
 .DS_Store
 Thumbs.db
 
-# Artefactos y binarios grandes del proyecto
-spark-*.tgz
-spark-*-bin-hadoop*/
+# Artefactos de build
+*.pyc
+*.pyo
+*.so
 
-
-############################33
+# Proyecto — archivos input/output locales
+**/files/input/
+**/files/output/

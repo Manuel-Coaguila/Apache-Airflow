@@ -12,8 +12,8 @@ with DAG(
 ) as dag:
 
     move_file_csv = BashOperator(
-        task_id = "move_file_csv",
-        bash_command = '''
+        task_id="move_file_csv",
+        bash_command='''
             echo "######################################"
             echo "######################################"
             echo "INICIANDO VALIDACION DEL ARCHIVO .CSV"
@@ -21,7 +21,7 @@ with DAG(
             echo "######################################"
 
             file_origen="/opt/airflow/nas/Proyecto_001/Employee.csv"
-            file_destino="/opt/spark/spark-projects/Proyecto_001/files/input/Employee.csv"
+            file_destino="/opt/spark/projects/proyecto_001/files/input/Employee.csv"
             if [ -f "$file_origen" ]; then
                 echo "ARHIVO .CSV ENCONTRADO"
                 echo "COPIANDO ARCHIVO .CSV"
@@ -37,16 +37,16 @@ with DAG(
     # Tarea: ejecutar script con SparkSubmitOperator
     run_spark_job = SparkSubmitOperator(
         task_id="read_sqlserver_table",
-        application="/opt/spark/spark-projects/Proyecto_001/main.py",   # ruta accesible por Spark
+        application="/opt/spark/projects/proyecto_001/main.py",   # ruta accesible por Spark
         conn_id="spark_default",
-        jars="/opt/spark/extra-jars/mssql-jdbc-12.6.3.jre8.jar",
+        jars="/opt/spark/jars/mssql-jdbc-12.6.3.jre8.jar",
         deploy_mode="client",   # clave: Spark ejecuta el .py
         verbose=True
     )
 
     task_end = BashOperator(
-        task_id = "task_end",
-        bash_command = '''
+        task_id="task_end",
+        bash_command='''
             echo "######################################"
             echo "######################################"
             echo "TAREA FINALIZADA"
