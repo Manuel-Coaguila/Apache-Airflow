@@ -1,7 +1,9 @@
 .git/
 .gitignore
+.github/
 __pycache__/
 *.py[cod]
+*$py.class
 logs/
 *.log
 *.md
@@ -12,5 +14,12 @@ logs/
 Thumbs.db
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .venv/
 venv/
+plugins/
+config/
+promt.md
+error.log
+docker-compose.yaml
+AGENTS.md
