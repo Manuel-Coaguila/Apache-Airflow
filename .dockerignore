@@ -21,5 +21,8 @@ plugins/
 config/
 promt.md
 error.log
+airflow.log
 docker-compose.yaml
 AGENTS.md
+spark-4.0.3-bin-hadoop3/
+extra_jars/

@@ -29,13 +29,16 @@ ENV/
 # Jupyter
 .ipynb_checkpoints/
 
-# Airflow / ejecución local
+# Airflow / ejecucion local
 logs/
 *.log
 airflow-webserver.pid
 airflow-scheduler.pid
 unittests.cfg
 standalone_admin_password.txt
+
+# Airflow root log
+airflow.log
 
 # Archivos temporales y del sistema
 *.tmp
@@ -51,20 +54,17 @@ Thumbs.db
 *.pyo
 *.so
 
-# Proyecto — archivos input/output locales
-**/files/input/
-**/files/output/
-
 # Spark distro (binarios) — NO trackear en git
 spark-4.0.3-bin-hadoop3/
 
 # JDBC drivers (binarios)
 extra_jars/
 
-# Plugins (vacío)
+# Plugins (vacio, solo .gitkeep)
 plugins/
 
-# Config local / docs
+# Config local (airflow.cfg generado por Airflow)
 config/
-promt.md
+
+# Docs de auditoria
 error.log
