@@ -1,6 +1,7 @@
 # Entorno y secretos
 .env
 .env.*
+!.env.example
 *.env
 *.pem
 *.key
@@ -66,5 +67,7 @@ plugins/
 # Config local (airflow.cfg generado por Airflow)
 config/
 
-# Docs de auditoria
+# Docs de auditoria / AI agent
 error.log
+AGENTS.md
+promt.md
