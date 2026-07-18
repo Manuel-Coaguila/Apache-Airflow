@@ -6,17 +6,17 @@
 - **Docker** compose con imagen custom `airflow-custom:001`
 
 ## Servicios
-| Servicio | Puerto | Comando |
-|---|---|---|
-| airflow-apiserver | 8080 | api-server |
-| airflow-scheduler | — | scheduler |
-| airflow-dag-processor | — | dag-processor |
-| airflow-worker | — | celery worker |
-| airflow-triggerer | — | triggerer |
-| airflow-cli | — | (debug profile) |
-| postgres | — | 16 |
-| redis | 6379 | 7.2-bookworm |
-| flower | 5555 | (flower profile) |
+| Servicio | Container name | Puerto | Comando |
+|---|---|---|---|
+| airflow-apiserver | `airflow_airflow-apiserver_1` | 8080 | api-server |
+| airflow-scheduler | `airflow_airflow-scheduler_1` | — | scheduler |
+| airflow-dag-processor | `airflow_airflow-dag-processor_1` | — | dag-processor |
+| airflow-worker | `airflow_airflow-worker_1` | — | celery worker |
+| airflow-triggerer | `airflow_airflow-triggerer_1` | — | triggerer |
+| airflow-cli | `airflow_airflow-cli_1` | — | (debug profile) |
+| postgres | `airflow_postgres_1` | — | 16 |
+| redis | `airflow_redis_1` | 6379 | 7.2-bookworm |
+| flower | `airflow_flower_1` | 5555 | (flower profile) |
 
 ## DAGs existentes
 
@@ -89,12 +89,26 @@ Las conexiones se definen en `ops/connections/connections.json` y se crean via P
 docker compose run --rm airflow-cli python -m pytest dags/proyecto_001/tests/ -v
 ```
 
+## Mapa de credenciales (.env)
+
+| Categoría | Variables | Usado por |
+|---|---|---|
+| **Infraestructura** — Postgres (BD interna Airflow) | `POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `docker-compose.yaml`, `airflow.cfg` |
+| **Infraestructura** — Redis (broker Celery) | `REDIS_HOST`, `REDIS_PASSWORD` | `docker-compose.yaml` |
+| **Seguridad** — Fernet + JWT + API | `FERNET_KEY`, `AIRFLOW__API_AUTH__JWT_SECRET`, `AIRFLOW__API__SECRET_KEY`, `AIRFLOW__API_AUTH__JWT_ISSUER` | `airflow.cfg`, `docker-compose.yaml` |
+| **Admin UI** | `_AIRFLOW_WWW_USER_USERNAME`, `_AIRFLOW_WWW_USER_PASSWORD`, `_AIRFLOW_WWW_USER_FIRSTNAME`, `_AIRFLOW_WWW_USER_LASTNAME`, `_AIRFLOW_WWW_USER_EMAIL` | `docker-compose.yaml` (servicio `airflow-init`) |
+| **Shared** — SQL Server | `SQL_SERVER_HOST`, `SQL_SERVER_PORT` | `ops/connections/connections.json`, Scripts Spark |
+| **Proyecto 001** — SQL Server + ETL | `P001_SQL_SERVER_DATABASE`, `P001_SQL_SERVER_USER`, `P001_SQL_SERVER_PASSWORD`, `P001_PROJECT_HOME`, `P001_LOGGING_CONF` | Scripts Spark (`main.py`) |
+| **Proyecto 002** (template) | `P002_SQL_SERVER_*`, `P002_PROJECT_HOME`, `P002_LOGGING_CONF` | (futuro) |
+
 ## Notas
 - La red `tesis-net` debe existir externamente (`external: true`)
-- El archivo `.env` debe contener `FERNET_KEY`, `AIRFLOW__API_AUTH__JWT_SECRET` y opcionalmente `_AIRFLOW_WWW_USER_USERNAME`/`_AIRFLOW_WWW_USER_PASSWORD`
+- El archivo `.env` debe contener `FERNET_KEY`, `AIRFLOW__API_AUTH__JWT_SECRET`, `AIRFLOW__API__SECRET_KEY` y opcionalmente `_AIRFLOW_WWW_USER_USERNAME`/`_AIRFLOW_WWW_USER_PASSWORD`
 - Cada proyecto sigue la misma estructura: `dag.py`, `scripts/{bash,sql}/`, `tests/`
 - Los scripts `.sh` deben ser ejecutables (`chmod +x`)
 - Para agregar un nuevo proyecto, copiar `proyecto_002/` y cambiar `dag_id`
+- Las settings `workers` y `parsing_processes` estan en 4 (cambiado respecto al default 1 y 2)
+- Las claves `secret_key` y `jwt_secret` se leen via `${VARIABLE}` desde `.env` (ya no estan hardcodeadas en `airflow.cfg`)
 
 ## Estructura ops/
 

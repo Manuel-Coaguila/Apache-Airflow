@@ -63,3 +63,6 @@ extra_jars/
 
 # Plugins (vacio, solo .gitkeep)
 plugins/
+
+# Conexiones Airflow (contiene passwords)
+ops/connections/connections.json
