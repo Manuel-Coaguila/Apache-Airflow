@@ -72,6 +72,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - ${AIRFLOW_PROJ_DIR:-.}/ops:/opt/airflow/ops
     - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/projects:/opt/spark/projects
     - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/conf:/opt/spark/conf
     - ${HOME}/Escritorio/Proyecto_Tesis/apache_spark/logs:/opt/spark/logs

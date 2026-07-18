@@ -18,13 +18,5 @@ ENV PATH=$PATH:$SPARK_HOME/bin
 
 USER airflow
 
-RUN pip install --no-cache-dir \
-    apache-airflow-providers-apache-spark \
-    apache-airflow-providers-standard \
-    apache-airflow-providers-microsoft-mssql \
-    apache-airflow-providers-smtp \
-    apache-airflow-providers-http \
-    apache-airflow-providers-slack \
-    apache-airflow-providers-openlineage \
-    apache-airflow-providers-sftp \
-    pytest
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt

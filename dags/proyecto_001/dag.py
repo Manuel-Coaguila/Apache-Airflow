@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 
 with DAG(
     dag_id="proyecto_001_dag",
@@ -14,6 +14,9 @@ with DAG(
     move_file_csv = BashOperator(
         task_id="move_file_csv",
         bash_command="/opt/airflow/dags/proyecto_001/scripts/bash/move_csv.sh ",
+        retries=2,
+        retry_delay=timedelta(minutes=2),
+        retry_exponential_backoff=True,
     )
 
     run_spark_job = SparkSubmitOperator(
@@ -22,7 +25,8 @@ with DAG(
         conn_id="spark_default",
         jars="/opt/spark/jars/mssql-jdbc-12.6.3.jre8.jar",
         deploy_mode="client",
-        verbose=True,
+        verbose=False,
+        execution_timeout=timedelta(hours=1),
     )
 
     task_end = BashOperator(

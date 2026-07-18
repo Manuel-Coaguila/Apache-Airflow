@@ -63,11 +63,3 @@ extra_jars/
 
 # Plugins (vacio, solo .gitkeep)
 plugins/
-
-# Config local (airflow.cfg generado por Airflow)
-config/
-
-# Docs de auditoria / AI agent
-error.log
-AGENTS.md
-promt.md

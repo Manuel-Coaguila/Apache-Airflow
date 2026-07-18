@@ -1,0 +1,8 @@
+username,password,role,email,firstname,lastname
+visor1,changeme,Viewer,visor1@empresa.com,Visor,Uno
+operador1,changeme,Op,op1@empresa.com,Operador,Uno
+operador2,changeme,Op,op2@empresa.com,Operador,Dos
+visor2,changeme,Viewer,visor2@empresa.com,Visor,Dos
+operador3,changeme,Op,op3@empresa.com,Operador,Tres
+operador4,changeme,Op,op4@empresa.com,Operador,Cuatro
+user1,user1,User,user1@empresa.com,User,Uno

@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-dags:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Airflow
+        run: |
+          pip install --no-cache-dir \
+            apache-airflow==3.2.2 \
+            apache-airflow-providers-apache-spark \
+            apache-airflow-providers-standard \
+            apache-airflow-providers-microsoft-mssql \
+            apache-airflow-providers-smtp \
+            apache-airflow-providers-http \
+            apache-airflow-providers-slack \
+            apache-airflow-providers-openlineage \
+            apache-airflow-providers-sftp \
+            pytest
+
+      - name: Run DAG tests
+        env:
+          AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+        run: |
+          python -m pytest dags/proyecto_001/tests/ -v
+
+      - name: Validate ops files
+        run: |
+          python -c "
+          import json, csv, io
+
+          # Validate connections.json
+          with open('ops/connections/connections.json') as f:
+              data = json.load(f)
+          ids = [e['conn_id'] for e in data]
+          assert len(ids) == len(set(ids)), 'Duplicate conn_id in connections.json'
+          print(f'  connections.json: {len(data)} connections OK')
+
+          # Validate users.csv
+          with open('ops/users/users.csv') as f:
+              reader = csv.DictReader(f)
+              rows = list(reader)
+          usernames = [r['username'] for r in rows]
+          assert len(usernames) == len(set(usernames)), 'Duplicate username in users.csv'
+          allowed_roles = {'Admin', 'User', 'Op', 'Viewer'}
+          for r in rows:
+              assert r['role'] in allowed_roles, f\"Invalid role '{r['role']}' in users.csv\"
+          print(f'  users.csv: {len(rows)} users OK')
+
+          print('All ops files validated')
+          "
+
+      - name: Validate DAG Python syntax
+        run: |
+          python -m py_compile dags/proyecto_001/dag.py
+          python -m py_compile dags/check_connections/dag.py
+          python -m py_compile dags/proyecto_002/dag.py
+          python -m py_compile dags/common/utils.py
+          echo "All DAGs compile OK"
+
+  build-docker:
+    needs: validate-dags
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Spark distribution
+        run: |
+          curl -fsSL https://archive.apache.org/dist/spark/spark-4.0.3/spark-4.0.3-bin-hadoop3.tgz \
+            -o /tmp/spark.tgz
+          tar xzf /tmp/spark.tgz
+          rm /tmp/spark.tgz
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker compose build
